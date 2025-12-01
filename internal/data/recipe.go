@@ -89,3 +89,29 @@ func InsertRecipe(db *sql.DB, recipe *Recipe) error {
 	}
 	return nil
 }
+
+func MakeRecipe() Recipe {
+	return Recipe{
+		Title:  "Rolls",
+		Slug:   "rolls",
+		Credit: "",
+		Image:  "",
+		Portions: types.JSON[Portions]{
+			Val: Portions{
+				Unit:  "roll",
+				Units: "rolls",
+				Value: 12,
+			},
+		},
+		Ingredients: types.JSON[Ingredients]{
+			Val: Ingredients{{
+				Name:  "flour",
+				Unit:  "g",
+				Value: 240,
+			}},
+		},
+		Steps: types.JSON[Steps]{
+			Val: Steps{{}},
+		},
+	}
+}
