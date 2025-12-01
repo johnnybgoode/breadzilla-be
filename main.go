@@ -2,12 +2,11 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 
-	"github.com/johnnybgoode/breadzilla/internal/data"
-	"github.com/johnnybgoode/breadzilla/internal/types"
+	"github.com/johnnybgoode/breadzilla/internal/api"
 	"github.com/johnnybgoode/breadzilla/pkg/database"
+	"github.com/johnnybgoode/breadzilla/pkg/server"
 )
 
 func main() {
@@ -18,33 +17,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Connected!")
 
-	recipe := data.Recipe{
-		Title:  "Rolls",
-		Slug:   "rolls",
-		Credit: "",
-		Image:  "",
-		Portions: types.JSON[data.Portions]{
-			Val: data.Portions{
-				Unit:  "roll",
-				Units: "rolls",
-				Value: 12,
-			},
-		},
-		Ingredients: types.JSON[data.Ingredients]{
-			Val: data.Ingredients{{
-				Name:  "flour",
-				Unit:  "g",
-				Value: 240,
-			}},
-		},
-		Steps: types.JSON[data.Steps]{
-			Val: data.Steps{{}},
-		},
-	}
-	data.InsertRecipe(db, &recipe)
+	server := server.NewServer(":8080", db)
+	api.AddRoutes(server)
 
-	recipes, _ := data.SelectAllRecipes(db)
-	fmt.Printf("Recipes %+v", recipes)
+	server.Start()
 }
