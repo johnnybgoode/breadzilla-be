@@ -36,3 +36,11 @@ func (v JSON[T]) Value() (driver.Value, error) {
 
 	return driver.Value([]byte(j)), nil
 }
+
+func (j *JSON[T]) UnmarshalJSON(data []byte) error {
+	return json.Unmarshal(data, &j.Val)
+}
+
+func (v JSON[T]) MarshalJSON() ([]byte, error) {
+	return json.Marshal(v.Val)
+}
