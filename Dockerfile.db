@@ -1,0 +1,4 @@
+FROM mysql
+ENV LANG=en_US.UTF-8
+ENV MYSQL_DATABASE=breadzilla
+ADD ./migrations/*.up.sql ./docker-entrypoint-initdb.d/

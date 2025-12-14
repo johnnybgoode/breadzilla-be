@@ -18,7 +18,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	server := server.NewServer(":8080", db)
+	server := server.NewServer(":3000", db)
 	api.AddRoutes(server)
 
 	server.Start()
