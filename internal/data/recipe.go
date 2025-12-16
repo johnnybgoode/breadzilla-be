@@ -44,6 +44,8 @@ const (
 	selectAllQuery    = `SELECT * FROM recipes ORDER BY title ASC`
 	selectBySlugQuery = `SELECT * FROM recipes WHERE slug = ? ORDER BY title ASC`
 	insertQuery       = `INSERT INTO recipes(title, slug, credit, image, portions, ingredients, steps) VALUES (?, ?, ?, ?, ?, ?, ?)`
+	updateQuery				= `UPDATE recipes SET title = ?, slug = ?, credit = ?, image = ?, portions = ?, ingredients = ?, steps = ? WHERE id = ?`
+	deleteQuery				= `DELETE FROM recipes WHERE id = ?`
 )
 
 func SelectAllRecipes(db *sql.DB) ([]Recipe, error) {
@@ -85,6 +87,20 @@ func SelectRecipeBySlug(db *sql.DB, slug string) (Recipe, error) {
 
 func InsertRecipe(db *sql.DB, recipe *Recipe) error {
 	if _, err := db.Exec(insertQuery, recipe.Title, recipe.Slug, recipe.Credit, recipe.Image, recipe.Portions, recipe.Ingredients, recipe.Steps); err != nil {
+		return err
+	}
+	return nil
+}
+
+func UpdateRecipe(db *sql.DB, recipe *Recipe) error {
+	if _, err := db.Exec(updateQuery, recipe.Title, recipe.Slug, recipe.Credit, recipe.Image, recipe.Portions, recipe.Ingredients, recipe.Steps, recipe.ID); err != nil {
+		return err
+	}
+	return nil
+}
+
+func DeleteRecipe(db *sql.DB, id int) error {
+	if _, err := db.Exec(deleteQuery, id); err != nil {
 		return err
 	}
 	return nil
