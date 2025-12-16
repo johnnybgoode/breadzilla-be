@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 type (
@@ -18,10 +19,15 @@ type (
 )
 
 func NewServer(address string, db *sql.DB) *Server {
+	e := echo.New();
+	e.HTTPErrorHandler = errorHandler;
+	e.Use(middleware.RequestLogger())	
+	e.Use(middleware.Recover())
+
 	return &Server{
 		address: address,
 		db:      db,
-		echo:    echo.New(),
+		echo:    e,
 	}
 }
 
