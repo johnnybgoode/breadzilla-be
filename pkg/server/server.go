@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/johnnybgoode/breadzilla/pkg/common"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -37,7 +38,7 @@ func NewServer(address string, db *sql.DB) *Server {
 func (s *Server) ApplyRoutes(routes RouteMap) *Server {
 	e := reflect.ValueOf(s.echo)
 	for mp, handler := range routes {
-		method, path := Must(parseMethodAndPath(mp))
+		method, path := common.Must2(parseMethodAndPath(mp))
 
 		args := make([]reflect.Value, 2)
 		args[0] = reflect.ValueOf(path)
@@ -63,13 +64,6 @@ func (s *Server) DB() *sql.DB {
 
 func (s *Server) Echo() *echo.Echo {
 	return s.echo
-}
-
-func Must(m string, p string, err error) (string, string) {
-	if err != nil {
-		panic(err)
-	}
-	return m, p
 }
 
 func parseMethodAndPath(v string) (method string, path string, err error) {
