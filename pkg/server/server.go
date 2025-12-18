@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"reflect"
@@ -9,29 +10,41 @@ import (
 	"github.com/johnnybgoode/breadzilla/pkg/common"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/sethvargo/go-envconfig"
 )
 
 type (
 	RouteMap     map[string]RouteHandler
 	RouteHandler func(echo.Context, *sql.DB) error
 
+	Config struct {
+		Address string `env:"SERVER_ADDRESS, default=:3000"`
+	}
+
 	Server struct {
-		address string
-		db      *sql.DB
-		echo    *echo.Echo
+		conf *Config
+		db   *sql.DB
+		echo *echo.Echo
 	}
 )
 
-func NewServer(address string, db *sql.DB) *Server {
+func (c *Config) ParseFromEnv(ctx *context.Context) error {
+	return envconfig.Process(*ctx, c)
+}
+
+func NewServer(ctx *context.Context, db *sql.DB) *Server {
+	config := new(Config)
+	common.Must[any](nil, config.ParseFromEnv(ctx))
+
 	e := echo.New()
 	e.HTTPErrorHandler = errorHandler
 	e.Use(middleware.RequestLogger())
 	e.Use(middleware.Recover())
 
 	return &Server{
-		address: address,
-		db:      db,
-		echo:    e,
+		conf: config,
+		db:   db,
+		echo: e,
 	}
 }
 
@@ -55,7 +68,11 @@ func (s *Server) withDB(handler RouteHandler) echo.HandlerFunc {
 }
 
 func (s *Server) Start() {
-	s.echo.Logger.Fatal(s.echo.Start(s.address))
+	s.echo.Logger.Fatal(s.echo.Start(s.Config().Address))
+}
+
+func (s *Server) Config() *Config {
+	return s.conf
 }
 
 func (s *Server) DB() *sql.DB {

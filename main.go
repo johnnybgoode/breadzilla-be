@@ -11,11 +11,12 @@ import (
 
 func main() {
 	ctx := context.Background()
-	var config database.Config
-	config.ProcessFromEnv(ctx)
-	db := common.Must(database.Connect(&config))
 
-	server := server.NewServer(":3000", db)
+	config := new(database.Config)
+	common.Must[any](nil, config.ProcessFromEnv(&ctx))
+	db := common.Must(database.Connect(config))
+
+	server := server.NewServer(&ctx, db)
 	server.ApplyRoutes(api.Routes)
 
 	server.Start()
