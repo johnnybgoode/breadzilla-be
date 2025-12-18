@@ -19,7 +19,7 @@ func main() {
 	}
 
 	server := server.NewServer(":3000", db)
-	api.AddRoutes(server)
+	server.ApplyRoutes(api.Routes)
 
 	server.Start()
 }

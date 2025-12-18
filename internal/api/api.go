@@ -33,7 +33,7 @@ func createRecipe(c echo.Context, db *sql.DB) error {
 	recipe := new(data.Recipe)
 	if err := c.Bind(recipe); err != nil {
 		c.Logger().Error(err)
-		// return err
+		return err
 	}
 	return data.InsertRecipe(db, recipe)
 }
@@ -57,10 +57,10 @@ func deleteRecipe(c echo.Context, db *sql.DB) error {
 	return data.DeleteRecipe(db, idInt)
 }
 
-func AddRoutes(s *server.Server) {
-	s.Echo().GET("/recipes", s.WithDB(getAllRecipes))
-	s.Echo().GET("/recipes/:slug", s.WithDB(getRecipeBySlug))
-	s.Echo().POST("/recipes", s.WithDB(createRecipe))
-	s.Echo().PUT("/recipes/:slug", s.WithDB(updateRecipe))
-	s.Echo().DELETE("/recipes/:id", s.WithDB(deleteRecipe))
+var Routes = server.RouteMap{
+	"GET::/recipes":        getAllRecipes,
+	"GET::/recipes/:slug":  getRecipeBySlug,
+	"POST::/recipes":       createRecipe,
+	"PUT::/recipes/:slug":  updateRecipe,
+	"DELETE::/recipes/:id": deleteRecipe,
 }
