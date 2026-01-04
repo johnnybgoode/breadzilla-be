@@ -3,9 +3,7 @@ package api
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"reflect"
 	"strconv"
 
 	"github.com/johnnybgoode/breadzilla/internal/data"
@@ -14,18 +12,20 @@ import (
 )
 
 func getAllRecipes(c echo.Context, db *sql.DB) error {
-	recipes, err := data.SelectAllRecipes(db)
-	if err != nil {
+	recipes := new(data.Recipes)
+	if err := recipes.SelectAll(db); err != nil {
 		c.Logger().Error(err)
 		return err
 	}
+	c.Logger().Printf("Recipes %v", recipes)
 	return c.JSON(http.StatusOK, recipes)
 }
 
 func getRecipeBySlug(c echo.Context, db *sql.DB) error {
 	slug := c.Param("slug")
-	recipe, err := data.SelectRecipeBySlug(db, slug)
-	if err != nil {
+	recipe := new(data.Recipe)
+
+	if err := recipe.SelectBySlug(db, slug); err != nil {
 		c.Logger().Error(err)
 		return err
 	}
@@ -38,7 +38,11 @@ func createRecipe(c echo.Context, db *sql.DB) error {
 		c.Logger().Error(err)
 		return err
 	}
-	return data.InsertRecipe(db, recipe)
+	if err := recipe.Insert(db, recipe); err != nil {
+		c.Logger().Error(err)
+		return err
+	}
+	return c.JSON(http.StatusOK, recipe)
 }
 
 func updateRecipe(c echo.Context, db *sql.DB) error {
@@ -47,49 +51,33 @@ func updateRecipe(c echo.Context, db *sql.DB) error {
 		c.Logger().Error(err)
 		return err
 	}
-	return data.UpdateRecipe(db, recipe)
+	if err := recipe.Update(db); err != nil {
+		c.Logger().Error(err)
+		return err
+	}
+	return c.JSON(http.StatusOK, recipe)
 }
 
 func patchRecipe(c echo.Context, db *sql.DB) error {
 	slug := c.Param("slug")
-	recipe, err := data.SelectRecipeBySlug(db, slug)
-	if err != nil {
+	recipe := new(data.Recipe)
+
+	if err := recipe.SelectBySlug(db, slug); err != nil {
 		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
-	recipePayload := make(map[string]interface{})
-	if err := json.NewDecoder(c.Request().Body).Decode(&recipePayload); err != nil {
+	// partialRecipe := make(map[string]interface{})
+	if err := json.NewDecoder(c.Request().Body).Decode(&recipe); err != nil {
 		c.Logger().Error(err)
 		return err
 	}
+	// fieldsUpdated, err := recipe.Patch(db, partialRecipe);
+	// if err != nil {
+	// 	c.Logger().Error(err)
+	// 	return err
+	// }
 
-	fieldsUpdated := make([]string, 0)
-	u := reflect.ValueOf(recipe).Elem()
-
-	for fieldName, rawVal := range recipePayload {
-		updateSuccess := false
-		field := u.FieldByName(fieldName)
-		if !field.CanSet() {
-			continue
-		}
-		v := reflect.ValueOf(rawVal)
-
-		// TODO switch field.Kind(); handle custom JSON field types
-		if field.Kind() == v.Kind() {
-			field.Set(v)
-			updateSuccess = true
-		}
-
-		if updateSuccess {
-			fieldsUpdated = append(fieldsUpdated, fieldName)
-		}
-	}
-
-	message := make(map[string]string)
-	message["payload"] = fmt.Sprintf("%v", recipePayload)
-	message["recipe"] = fmt.Sprintf("%v", recipe)
-	message["fieldsUpdated"] = fmt.Sprintf("%v", fieldsUpdated)
-	return c.JSONPretty(http.StatusOK, message, " ")
+	return c.JSONPretty(http.StatusOK, recipe, " ")
 }
 
 func deleteRecipe(c echo.Context, db *sql.DB) error {
@@ -99,7 +87,12 @@ func deleteRecipe(c echo.Context, db *sql.DB) error {
 		c.Logger().Error(err)
 		return err
 	}
-	return data.DeleteRecipe(db, idInt)
+
+	if err := (new(data.Recipe)).Delete(db, idInt); err != nil {
+		c.Logger().Error(err)
+		return err
+	}
+	return c.JSON(http.StatusOK, nil)
 }
 
 var Routes = server.RouteMap{
